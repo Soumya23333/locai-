@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LocAI — AI Location Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#11111a;--bg3:#181824;--bg4:#1e1e2e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --accent:#00e5a0;--accent2:#0099ff;--text:#f0f0f8;--text2:#9090b0;--text3:#5a5a7a;
+  --fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.6;overflow-x:hidden;min-height:100vh;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes radar{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* AUTH */
+#authScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:36px 36px;}
+.auth-box{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:36px 32px;width:100%;max-width:400px;animation:fadeUp .5s ease;}
+.auth-logo{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;}
+.auth-tag{text-align:center;color:var(--text3);font-size:13px;margin-bottom:26px;}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:22px;gap:4px;}
+.atab{flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:.2s;border:none;background:transparent;font-family:var(--fb);}
+.atab.on{background:var(--accent);color:#000;}
+.aform{display:flex;flex-direction:column;gap:12px;}
+.af{display:flex;flex-direction:column;gap:5px;}
+.al{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);}
+.ai{background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:11px 14px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;transition:.2s;width:100%;}
+.ai:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.08);}
+.ai::placeholder{color:var(--text3);}
+.abtn{background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fb);transition:.2s;margin-top:4px;}
+.abtn:hover{background:#00ffb3;}
+.abtn:disabled{background:var(--bg4);color:var(--text3);cursor:default;}
+.aerr{background:rgba(255,85,85,.1);border:1px solid rgba(255,85,85,.3);border-radius:8px;padding:9px 12px;color:#ff8888;font-size:12px;display:none;margin-bottom:4px;}
+.aerr.show{display:block;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:99;background:rgba(10,10,15,.93);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 20px;gap:12px;}
+.logo{font-family:var(--fd);font-size:19px;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:7px;}
+.logo-sub{color:var(--text3);font-size:12px;font-weight:400;font-family:var(--fb);}
+.nav-r{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.upill{background:var(--bg3);border:1px solid rgba(0,229,160,.3);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.udot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.logoutbtn{background:transparent;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--fb);transition:.2s;}
+.logoutbtn:hover{border-color:#ff5555;color:#ff5555;}
+.lpill{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 13px;font-size:12px;color:var(--text2);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;}
+.lpill:hover{border-color:var(--accent);color:var(--accent);}
+.lpill.on{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.08);}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.lpill.on .ldot{background:var(--accent);animation:pulse 1.5s infinite;}
+
+.sbar{background:rgba(0,229,160,.07);border-bottom:1px solid rgba(0,229,160,.14);padding:7px 20px;font-size:11px;color:var(--accent);display:none;align-items:center;gap:8px;}
+.sbar.show{display:flex;}
+.spin{width:10px;height:10px;border:2px solid rgba(0,229,160,.25);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+
+/* HERO */
+.hero{padding:36px 20px 24px;display:flex;gap:28px;align-items:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+.hg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse 80% 100% at 50% 0%,black,transparent);}
+.ht{position:relative;z-index:1;flex:1;animation:fadeUp .5s ease both;}
+.eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.eyebrow::before{content:'';width:20px;height:1px;background:var(--accent);}
+h1{font-family:var(--fd);font-size:clamp(24px,4vw,44px);font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:10px;}
+h1 em{font-style:normal;color:var(--accent);}
+.hsub{color:var(--text2);font-size:13px;max-width:420px;margin-bottom:20px;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;}
+.bp{background:var(--accent);color:#000;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--fb);transition:.2s;display:flex;align-items:center;gap:6px;}
+.bp:hover{background:#00ffb3;transform:translateY(-1px);}
+.bp:disabled{background:var(--bg4);color:var(--text3);cursor:default;transform:none;}
+.bs{background:transparent;color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:10px 18px;font-size:13px;cursor:pointer;font-family:var(--fb);transition:.2s;}
+.bs:hover{border-color:var(--text2);}
+.rw{position:relative;width:100px;height:100px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.rr{position:absolute;width:76px;height:76px;border-radius:50%;border:1px solid rgba(0,229,160,.22);}
+.rr:nth-child(1){animation:radar 2.4s 0s infinite;}
+.rr:nth-child(2){animation:radar 2.4s .8s infinite;}
+.rr:nth-child(3){animation:radar 2.4s 1.6s infinite;}
+.hico{width:50px;height:50px;border-radius:50%;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.32);display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;z-index:1;animation:float 3s ease-in-out infinite;}
+
+/* SEARCH */
+.search-row{padding:14px 20px;border-bottom:1px solid var(--border);}
+.sb2{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:8px;transition:.2s;}
+.sb2:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.07);}
+.sb2 input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--fb);font-size:14px;}
+.sb2 input::placeholder{color:var(--text3);}
+.sb2-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--fb);transition:.2s;}
+.sb2-btn:hover{background:#00ffb3;}
+
+/* RECOMMENDATIONS */
+#recoSec{padding:16px 20px;border-bottom:1px solid var(--border);display:none;}
+.reco-hdr{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
+.reco-ttl{font-family:var(--fd);font-size:16px;font-weight:700;}
+.reco-sub{font-size:12px;color:var(--text3);}
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.rc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.25s;animation:fadeUp .4s ease both;}
+.rc:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,229,160,.1);}
+.rc-img{height:90px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;}
+.rc-tag{position:absolute;top:7px;left:7px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
+.rc-tag.famous{background:rgba(0,229,160,.9);color:#000;}
+.rc-tag.nearby{background:rgba(0,153,255,.9);color:#fff;}
+.rc-body{padding:10px 12px;}
+.rc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rc-meta{font-size:11px;color:var(--text3);}
+.rc-dir{display:flex;align-items:center;gap:4px;margin-top:8px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--accent2);font-family:var(--fb);transition:.15s;width:100%;cursor:pointer;border:none;}
+.rc-dir:hover{background:rgba(0,153,255,.1);}
+
+/* DIRECTIONS MODAL */
+#dirModal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:150;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);}
+#dirModal.show{display:flex;animation:fadeIn .2s ease;}
+.dir-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:680px;overflow:hidden;animation:slideIn .3s ease;}
+.dir-hdr{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.dir-ttl{font-family:var(--fd);font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dir-close{background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:.2s;flex-shrink:0;}
+.dir-close:hover{border-color:#ff5555;color:#ff5555;}
+.dir-map{height:320px;background:var(--bg3);}
+.dir-map iframe{width:100%;height:100%;border:none;display:block;}
+.dir-foot{padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);}
+.dir-pill{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;}
+.dir-pill b{color:var(--accent);}
+.dir-open{margin-left:auto;background:var(--accent2);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--fb);transition:.2s;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.dir-open:hover{background:#0080dd;}
+
+/* MAIN GRID */
+.grid{display:grid;grid-template-columns:1fr 340px;gap:16px;padding:16px 20px;}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
+.ph{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.ph-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.pig{background:rgba(0,229,160,.1);}.pib{background:rgba(0,153,255,.1);}.pio{background:rgba(255,107,53,.1);}
+.pt{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.3px;}
+.pb{margin-left:auto;font-size:10px;background:rgba(0,229,160,.1);color:var(--accent);padding:2px 8px;border-radius:20px;border:1px solid rgba(0,229,160,.2);}
+
+.map-area{flex:1;min-height:240px;background:var(--bg3);position:relative;}
+.map-area iframe{width:100%;height:100%;border:none;display:block;filter:invert(.9) hue-rotate(180deg) saturate(.6) brightness(.78);}
+.map-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text3);}
+.map-ph .mi{font-size:30px;opacity:.3;}
+.map-ph p{font-size:12px;text-align:center;max-width:150px;}
+.map-tag{position:absolute;bottom:10px;right:10px;background:rgba(10,10,15,.9);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;backdrop-filter:blur(8px);}
+.coord{font-family:'Courier New',monospace;color:var(--accent);font-size:10px;}
+
+.wcard{display:flex;align-items:center;gap:14px;padding:14px;}
+.wi{font-size:34px;animation:float 4s ease-in-out infinite;}
+.winfo{flex:1;}
+.wc{font-family:var(--fd);font-size:14px;font-weight:700;}
+.wt{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--accent);line-height:1;}
+.wd{font-size:11px;color:var(--text2);text-transform:capitalize;}
+.wm{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+.wp{font-size:10px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:20px;}
+.wl{padding:14px;color:var(--text3);font-size:12px;display:flex;align-items:center;gap:7px;}
+.wl::before{content:'';width:12px;height:12px;border:2px solid var(--bg4);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+
+.catrow{padding:8px 12px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.cb{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:var(--fb);transition:.15s;}
+.cb:hover{border-color:var(--text2);}
+.cb.on{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.07);}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;padding:10px;}
+.pc{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;transition:.2s;cursor:pointer;animation:fadeUp .3s ease both;}
+.pc:hover{border-color:var(--accent);transform:translateY(-2px);}
+.pi2{font-size:17px;margin-bottom:5px;}
+.pn{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.ptyp{font-size:10px;color:var(--text3);text-transform:capitalize;}
+.pdist{font-size:10px;color:var(--accent);margin-top:3px;}
+.pdir{font-size:10px;color:var(--accent2);margin-top:4px;display:flex;align-items:center;gap:3px;}
+.pempty{text-align:center;padding:24px;color:var(--text3);font-size:12px;}
+
+.chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px;min-height:200px;max-height:320px;}
+.msg{animation:msgIn .2s ease;}
+.mai{display:flex;gap:7px;align-items:flex-end;}
+.mu{display:flex;flex-direction:row-reverse;gap:7px;align-items:flex-end;}
+.mav{width:24px;height:24px;border-radius:50%;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.22);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.mb{max-width:83%;padding:8px 11px;border-radius:10px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.mai .mb{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:3px 10px 10px 10px;}
+.mu .mb{background:var(--accent);color:#000;border-radius:10px 3px 10px 10px;font-weight:500;}
+.mt{font-size:9px;color:var(--text3);margin-top:2px;text-align:right;}
+.tdots{display:flex;gap:3px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px 10px 10px 10px;}
+.tdots span{width:5px;height:5px;border-radius:50%;background:var(--text3);}
+.tdots span:nth-child(1){animation:pulse 1s 0s infinite;}
+.tdots span:nth-child(2){animation:pulse 1s .2s infinite;}
+.tdots span:nth-child(3){animation:pulse 1s .4s infinite;}
+.chips{padding:7px 10px;display:flex;gap:5px;flex-wrap:wrap;border-top:1px solid var(--border);}
+.chip{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:10px;padding:3px 9px;border-radius:20px;cursor:pointer;font-family:var(--fb);transition:.15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.cin-row{padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;}
+.cin{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;transition:.2s;}
+.cin:focus{border-color:var(--accent);}
+.cin::placeholder{color:var(--text3);}
+.csend{background:var(--accent);color:#000;border:none;border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:.2s;flex-shrink:0;}
+.csend:hover{background:#00ffb3;}
+.csend:disabled{background:var(--bg4);color:var(--text3);cursor:default;}
+
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;}
+.iitem{background:var(--bg3);border-radius:8px;padding:9px;border:1px solid var(--border);}
+.ilabel{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:2px;}
+.ival{font-size:12px;font-weight:500;color:var(--text);}
+.ival.ac{color:var(--accent);font-size:10px;font-family:'Courier New',monospace;}
+
+.hlist,.flist{padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;}
+.hcard,.fcard{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px;display:flex;gap:8px;align-items:flex-start;cursor:pointer;transition:.2s;}
+.hcard:hover,.fcard:hover{border-color:var(--accent);}
+.himg{width:34px;height:34px;border-radius:7px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.hname,.fname{font-size:12px;font-weight:500;color:var(--text);}
+.hmeta,.ftype{font-size:10px;color:var(--text3);}
+.hstars{color:#f0b429;font-size:10px;margin-top:2px;}
+.frat{margin-left:auto;font-size:11px;color:#f0b429;flex-shrink:0;}
+.fcard{align-items:center;}
+.femo{font-size:18px;flex-shrink:0;}
+.xdir{font-size:10px;color:var(--accent2);margin-top:3px;}
+.no-data{padding:12px;color:var(--text3);font-size:12px;text-align:center;}
+
+footer{border-top:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}
+.fl{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--accent);}
+.fr{font-size:11px;color:var(--text3);}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border-radius:10px;padding:10px 18px;font-size:13px;z-index:999;animation:fadeUp .3s ease;display:flex;align-items:center;gap:8px;max-width:90vw;white-space:nowrap;}
+.tok{background:#0d1f17;border:1px solid var(--accent);color:var(--accent);}
+.terr{background:#1f0d0d;border:1px solid #ff5555;color:#ff5555;}
+.tinf{background:#0d131f;border:1px solid #0099ff;color:#0099ff;}
+
+@media(max-width:860px){
+  .grid{grid-template-columns:1fr;}
+  .hero{flex-direction:column;padding:24px 14px 18px;}
+  .rw{display:none;}
+  .grid,.search-row,#recoSec{padding-left:14px;padding-right:14px;}
+  .nav-r{gap:5px;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">🌐 LocAI</div>
+    <div class="auth-tag">Your AI-powered location guide</div>
+    <div class="auth-tabs">
+      <button class="atab on" id="loginTab" onclick="switchAuth('login')">Sign In</button>
+      <button class="atab"    id="regTab"   onclick="switchAuth('register')">Register</button>
+    </div>
+    <div class="aerr" id="aerr"></div>
+
+    <div class="aform" id="loginForm">
+      <div class="af"><label class="al">Email</label><input class="ai" id="lEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="af"><label class="al">Password</label><input class="ai" id="lPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button class="abtn" id="lBtn" onclick="doLogin()">Sign In →</button>
+    </div>
+
+    <div class="aform" id="regForm" style="display:none;">
+      <div class="af"><label class="al">Your Name</label><input class="ai" id="rName" type="text" placeholder="Rahul Kumar" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <div class="af"><label class="al">Email</label><input class="ai" id="rEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <div class="af"><label class="al">Password</label><input class="ai" id="rPass" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+      <button class="abtn" id="rBtn" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appScreen" style="display:none;">
+
+<nav>
+  <div class="logo">🌐 LocAI <span class="logo-sub">Location Agent</span></div>
+  <div class="nav-r">
+    <div class="upill"><div class="udot"></div><span id="uName">User</span></div>
+    <button class="logoutbtn" onclick="doLogout()">Logout</button>
+    <div class="lpill" id="locPill" onclick="getGPS()"><div class="ldot"></div><span id="locTxt">Share Location</span></div>
+  </div>
+</nav>
+
+<div class="sbar" id="statusBar"><div class="spin"></div><span id="sbMsg">Loading...</span></div>
+
+<div class="hero">
+  <div class="hg"></div>
+  <div class="ht">
+    <div class="eyebrow">AI-Powered Location Intelligence</div>
+    <h1>Explore Any City<br/>Like a <em>Local</em></h1>
+    <p class="hsub">Discover top attractions, food spots, hotels — and get instant directions.</p>
+    <div class="brow">
+      <button class="bp" id="gpsBtn" onclick="getGPS()">📍 Detect My Location</button>
+      <button class="bs" onclick="document.getElementById('cq').focus()">🔍 Search a City</button>
+    </div>
+  </div>
+  <div class="rw"><div class="rr"></div><div class="rr"></div><div class="rr"></div><div class="hico">🗺️</div></div>
+</div>
+
+<div class="search-row">
+  <div class="sb2">
+    <span style="color:var(--text3)">🔍</span>
+    <input id="cq" placeholder="Search any city — Bhubaneswar, Mumbai, Paris, Tokyo..." onkeydown="if(event.key==='Enter')doSearch()"/>
+    <button class="sb2-btn" onclick="doSearch()">Explore →</button>
+  </div>
+</div>
+
+<!-- RECOMMENDATIONS -->
+<div id="recoSec">
+  <div class="reco-hdr">
+    <div class="reco-ttl">🌟 Top Recommendations</div>
+    <div class="reco-sub" id="recoSub">Famous &amp; nearby places</div>
+  </div>
+  <div class="reco-grid" id="recoGrid"></div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="panel" id="wPanel" style="display:none;">
+      <div class="ph"><div class="ph-ico pib">☁️</div><div class="pt">Live Weather</div><div class="pb" id="wBadge">—</div></div>
+      <div class="wl" id="wLoad" style="display:none;">Fetching weather...</div>
+      <div class="wcard" id="wCard" style="display:none;">
+        <div class="wi" id="wIco">🌤️</div>
+        <div class="winfo">
+          <div class="wc" id="wCity">—</div><div class="wt" id="wTemp">—°C</div>
+          <div class="wd" id="wDesc">—</div>
+          <div class="wm"><span class="wp" id="wHum">💧</span><span class="wp" id="wWnd">💨</span><span class="wp" id="wFeel">🌡️</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pig">🗺️</div><div class="pt">Live Map</div><div class="pb" id="mBadge">Waiting</div></div>
+      <div class="map-area" id="mapArea" style="height:260px;">
+        <div class="map-ph"><div class="mi">🗺️</div><p>Share location or search a city</p><button class="bp" style="font-size:11px;padding:7px 14px;margin-top:4px;" onclick="getGPS()">📍 Use GPS</button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pib">📍</div><div class="pt">Nearby Places</div><div class="pb" id="pBadge">0 found</div></div>
+      <div class="catrow" id="catRow"><button class="cb on" onclick="doFilter('all',this)">All</button></div>
+      <div class="pgrid" id="pgrid"><div class="pempty">Share location to discover places</div></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pig">🤖</div><div class="pt">AI Location Assistant</div><div class="pb">Online</div></div>
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="msg mai"><div class="mav">🤖</div><div><div class="mb" id="welcomeMsg">Hey! I'm your AI travel guide 🌍 Share GPS or search a city to begin!</div><div class="mt">now</div></div></div>
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="qs('Best local food?')">🍛 Food</button>
+        <button class="chip" onclick="qs('Nearest hospital?')">🏥 Hospital</button>
+        <button class="chip" onclick="qs('Best hotels?')">🏨 Hotels</button>
+        <button class="chip" onclick="qs('Top attractions?')">🎯 Sights</button>
+        <button class="chip" onclick="qs('How to get around?')">🚌 Transport</button>
+        <button class="chip" onclick="qs('Nearest ATM?')">🏧 ATM</button>
+      </div>
+      <div class="cin-row">
+        <input class="cin" id="cin" placeholder="Ask anything about your location..." onkeydown="if(event.key==='Enter')doSend()"/>
+        <button class="csend" id="csend" onclick="doSend()">↑</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pio">📊</div><div class="pt">Location Info</div></div>
+      <div class="igrid">
+        <div class="iitem"><div class="ilabel">Latitude</div><div class="ival ac" id="iLat">—</div></div>
+        <div class="iitem"><div class="ilabel">Longitude</div><div class="ival ac" id="iLng">—</div></div>
+        <div class="iitem"><div class="ilabel">City</div><div class="ival" id="iCity">—</div></div>
+        <div class="iitem"><div class="ilabel">Status</div><div class="ival" id="iStat">Idle</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pib">🏨</div><div class="pt">Nearby Hotels</div><div class="pb" id="hBadge">0</div></div>
+      <div class="hlist" id="hlist"><div class="no-data">Share location to find hotels</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-ico pio">🍽️</div><div class="pt">Food &amp; Restaurants</div><div class="pb" id="fBadge">0</div></div>
+      <div class="flist" id="flist"><div class="no-data">Share location to find food</div></div>
+    </div>
+  </div>
+</div>
+
+<footer><div class="fl">🌐 LocAI</div><div class="fr">Powered by Groq AI · OpenStreetMap · Open-Meteo</div></footer>
+</div>
+
+<!-- DIRECTIONS MODAL -->
+<div id="dirModal">
+  <div class="dir-box">
+    <div class="dir-hdr">
+      <div class="ph-ico pig" style="font-size:14px;flex-shrink:0;">🗺️</div>
+      <div class="dir-ttl" id="dirTtl">Directions</div>
+      <div class="dir-close" onclick="closeDir()">✕</div>
+    </div>
+    <div class="dir-map"><iframe id="dirFrame" src="" loading="lazy" title="Directions Map"></iframe></div>
+    <div class="dir-foot">
+      <div class="dir-pill">📍 From: <b id="dirFrom">Your location</b></div>
+      <div class="dir-pill">🎯 To: <b id="dirTo">—</b></div>
+      <button class="dir-open" onclick="openInMaps()">🗺️ Open Full Map</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+const S   = { lat:null, lng:null, city:'', sessionId:crypto.randomUUID(), token:localStorage.getItem('locai_token')||null, user:JSON.parse(localStorage.getItem('locai_user')||'null'), busy:false, dirTarget:null };
+const $   = id => document.getElementById(id);
+const ft  = () => new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function setStatus(msg,show=true){$('statusBar').classList.toggle('show',show);$('sbMsg').textContent=msg;}
+function toast(msg,t='ok'){document.querySelectorAll('.toast').forEach(x=>x.remove());const d=document.createElement('div');d.className='toast t'+t;d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),3500);}
+function authHdrs(){return{'Content-Type':'application/json',...(S.token?{'Authorization':'Bearer '+S.token}:{})};}
+
+// ── AUTH ──────────────────────────────────────────────────
+function switchAuth(m){
+  $('loginForm').style.display=m==='login'?'flex':'none';
+  $('regForm').style.display=m==='register'?'flex':'none';
+  $('loginTab').classList.toggle('on',m==='login');
+  $('regTab').classList.toggle('on',m==='register');
+  $('aerr').classList.remove('show');
+}
+function showAErr(msg){$('aerr').textContent=msg;$('aerr').classList.add('show');}
+
+async function doLogin(){
+  const email=$('lEmail').value.trim(),pass=$('lPass').value;
+  if(!email||!pass){showAErr('Fill in all fields');return;}
+  $('lBtn').disabled=true;$('lBtn').textContent='Signing in...';
+  try{
+    const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!r.ok){showAErr(d.error||'Login failed');$('lBtn').disabled=false;$('lBtn').textContent='Sign In →';return;}
+    saveAuth(d.token,d.user);
+  }catch{showAErr('Connection error — is the server running?');$('lBtn').disabled=false;$('lBtn').textContent='Sign In →';}
+}
+
+async function doRegister(){
+  const name=$('rName').value.trim(),email=$('rEmail').value.trim(),pass=$('rPass').value;
+  if(!name||!email||!pass){showAErr('Fill in all fields');return;}
+  $('rBtn').disabled=true;$('rBtn').textContent='Creating account...';
+  try{
+    const r=await fetch(API+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pass})});
+    const d=await r.json();
+    if(!r.ok){showAErr(d.error||'Registration failed');$('rBtn').disabled=false;$('rBtn').textContent='Create Account →';return;}
+    saveAuth(d.token,d.user);
+  }catch{showAErr('Connection error — is the server running?');$('rBtn').disabled=false;$('rBtn').textContent='Create Account →';}
+}
+
+function saveAuth(token,user){
+  S.token=token;S.user=user;
+  localStorage.setItem('locai_token',token);
+  localStorage.setItem('locai_user',JSON.stringify(user));
+  $('authScreen').style.display='none';
+  $('appScreen').style.display='block';
+  $('uName').textContent=user.name||'User';
+  $('welcomeMsg').textContent='Hey '+(user.name?.split(' ')[0]||'there')+'! 🌍 Share your GPS or search a city to start exploring!';
+}
+function doLogout(){localStorage.removeItem('locai_token');localStorage.removeItem('locai_user');S.token=null;S.user=null;$('authScreen').style.display='flex';$('appScreen').style.display='none';}
+if(S.token&&S.user){$('authScreen').style.display='none';$('appScreen').style.display='block';$('uName').textContent=S.user.name||'User';$('welcomeMsg').textContent='Welcome back, '+(S.user.name?.split(' ')[0]||'there')+'! 🌍 Search a city or share GPS to begin.';}
+
+// ── GPS ───────────────────────────────────────────────────
+function getGPS(){
+  const btn=$('gpsBtn');btn.disabled=true;btn.textContent='📍 Locating...';
+  setStatus('Accessing GPS...');
+  if(!navigator.geolocation){btn.disabled=false;btn.textContent='📍 Detect My Location';setStatus('',false);toast('GPS not supported — type city name','err');aiSay("GPS unavailable — type your city name in the search bar!");return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{btn.disabled=false;btn.textContent='📍 Detect My Location';loadLocation(pos.coords.latitude,pos.coords.longitude);},
+    err=>{btn.disabled=false;btn.textContent='📍 Detect My Location';setStatus('',false);
+      toast({1:'Permission denied — allow location in browser',2:'Signal issue — type city name',3:'Timed out — type city name'}[err.code]||'GPS error','err');
+      aiSay("Couldn't get GPS — try typing your city name in the search bar!");},
+    {timeout:12000,maximumAge:0,enableHighAccuracy:false}
+  );
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+async function doSearch(){
+  const q=$('cq').value.trim();if(!q){toast('Type a city name first','inf');return;}
+  setStatus('Searching "'+q+'"...');addUser('Searching: '+q);$('cq').value='';
+  try{
+    const r=await fetch(API+'/location/search?q='+encodeURIComponent(q));
+    if(!r.ok)throw new Error();
+    const d=await r.json();
+    loadLocation(d.lat,d.lng,d.city);
+  }catch{setStatus('',false);toast('"'+q+'" not found','err');aiSay('Couldn\'t find "'+q+'" — try a different spelling!');}
+}
+
+// ── LOAD LOCATION ─────────────────────────────────────────
+async function loadLocation(lat,lng,city=null){
+  S.lat=lat;S.lng=lng;
+  $('iLat').textContent=lat.toFixed(5);$('iLng').textContent=lng.toFixed(5);$('iStat').textContent='Active';
+  $('locPill').classList.add('on');$('locTxt').textContent=lat.toFixed(3)+', '+lng.toFixed(3);
+  loadMap(lat,lng);loadWeather(lat,lng);loadNearby(lat,lng);
+  if(!city){try{const r=await fetch(API+'/location/reverse?lat='+lat+'&lng='+lng);const d=await r.json();city=d.city;}catch{}}
+  if(city){S.city=city;$('iCity').textContent=city;$('locTxt').textContent=city;$('wCity').textContent=city;}
+  setStatus('',false);
+  loadRecos(lat,lng,city);
+  await callAI('I just arrived at '+(city||lat.toFixed(4)+','+lng.toFixed(4))+'. Give me a warm 2-sentence welcome and 3 quick local tips.',true);
+}
+
+// ── MAP ───────────────────────────────────────────────────
+function loadMap(lat,lng){
+  const b=(lng-.014)+','+(lat-.014)+','+(lng+.014)+','+(lat+.014);
+  $('mapArea').innerHTML='<iframe src="https://www.openstreetmap.org/export/embed.html?bbox='+b+'&layer=mapnik&marker='+lat+','+lng+'" style="width:100%;height:100%;border:none;filter:invert(.9) hue-rotate(180deg) saturate(.6) brightness(.78);" loading="lazy"></iframe><div class="map-tag"><div class="coord">'+lat.toFixed(4)+', '+lng.toFixed(4)+'</div></div>';
+  $('mBadge').textContent='Live';
+}
+
+// ── WEATHER ───────────────────────────────────────────────
+async function loadWeather(lat,lng){
+  $('wPanel').style.display='';$('wLoad').style.display='flex';$('wCard').style.display='none';
+  try{
+    const r=await fetch(API+'/location/weather?lat='+lat+'&lng='+lng);
+    const d=await r.json();const c=d.current;
+    const IC={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',75:'❄️',80:'🌦️',82:'⛈️',95:'⛈️'};
+    const DC={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Snow',75:'Heavy snow',80:'Showers',82:'Violent showers',95:'Thunderstorm'};
+    $('wLoad').style.display='none';$('wCard').style.display='flex';
+    $('wIco').textContent=IC[c.weather_code]||'🌡️';$('wTemp').textContent=Math.round(c.temperature_2m)+'°C';
+    $('wDesc').textContent=DC[c.weather_code]||'—';$('wHum').textContent='💧 '+c.relative_humidity_2m+'%';
+    $('wWnd').textContent='💨 '+Math.round(c.wind_speed_10m)+' km/h';$('wFeel').textContent='🌡️ Feels '+Math.round(c.apparent_temperature)+'°C';
+    $('wBadge').textContent=Math.round(c.temperature_2m)+'°C';
+  }catch{$('wLoad').style.display='none';}
+}
+
+// ── RECOMMENDATIONS ───────────────────────────────────────
+const FAMOUS={
+  'bhubaneswar':[{n:'Lingaraj Temple',e:'🛕',d:'11th century Shiva temple'},{n:'Udayagiri Caves',e:'🏔️',d:'1st century BC Jain caves'},{n:'Rajarani Temple',e:'⛪',d:'Kalinga architecture'},{n:'Dhauli Stupa',e:'☮️',d:'Buddhist peace pagoda'}],
+  'puri':       [{n:'Jagannath Temple',e:'🛕',d:'12th century temple'},{n:'Puri Beach',e:'🏖️',d:'Golden sandy beach'},{n:'Konark Sun Temple',e:'🌞',d:'UNESCO World Heritage'},{n:'Chilika Lake',e:'🦢',d:'Largest coastal lagoon'}],
+  'mumbai':     [{n:'Gateway of India',e:'🏛️',d:'Iconic colonial arch'},{n:'Marine Drive',e:'🌊',d:'The Queen\'s Necklace'},{n:'Elephanta Caves',e:'🏔️',d:'UNESCO rock-cut caves'},{n:'Juhu Beach',e:'🏖️',d:'Famous sunset beach'}],
+  'delhi':      [{n:'Red Fort',e:'🏰',d:'Mughal-era monument'},{n:'Qutub Minar',e:'🗼',d:'UNESCO World Heritage'},{n:'India Gate',e:'🎖️',d:'War memorial'},{n:'Lotus Temple',e:'🌸',d:'Bahá\'í temple'}],
+  'kolkata':    [{n:'Victoria Memorial',e:'🏛️',d:'Colonial marble hall'},{n:'Howrah Bridge',e:'🌉',d:'Iconic cantilever bridge'},{n:'Durga Puja Pandals',e:'🎭',d:'Cultural festival'},{n:'Park Street',e:'🛍️',d:'Food & shopping hub'}],
+  'chennai':    [{n:'Marina Beach',e:'🏖️',d:'World\'s longest beach'},{n:'Kapaleeshwarar Temple',e:'🛕',d:'Dravidian architecture'},{n:'Fort St. George',e:'🏰',d:'First English fort in India'},{n:'Mahabalipuram',e:'🗿',d:'UNESCO shore temples'}],
+  'paris':      [{n:'Eiffel Tower',e:'🗼',d:'Iconic iron tower'},{n:'Louvre Museum',e:'🎨',d:'World\'s largest museum'},{n:'Notre-Dame',e:'⛪',d:'Gothic cathedral'},{n:'Champs-Élysées',e:'🛍️',d:'Famous avenue'}],
+  'tokyo':      [{n:'Senso-ji Temple',e:'⛩️',d:'Tokyo\'s oldest temple'},{n:'Shibuya Crossing',e:'🚶',d:'World\'s busiest crossing'},{n:'Mount Fuji',e:'🗻',d:'Iconic volcano'},{n:'Akihabara',e:'🎮',d:'Electronics district'}],
+  'default':    [{n:'City Center',e:'🏙️',d:'Main area'},{n:'Local Market',e:'🛍️',d:'Shopping'},{n:'Central Park',e:'🌳',d:'Recreation'},{n:'Heritage Site',e:'🏛️',d:'History & culture'}],
+};
+
+function loadRecos(lat,lng,city){
+  $('recoSec').style.display='block';
+  $('recoSub').textContent='Top spots in '+(city||'this area');
+  const key=(city||'').toLowerCase().split(',')[0].trim();
+  const famous=(FAMOUS[key]||FAMOUS['default']).map(f=>({...f,isNearby:false,lat:lat+(Math.random()-.5)*.012,lng:lng+(Math.random()-.5)*.012}));
+  const nearby=(window._places||[]).slice(0,4).map(p=>({n:p.name,e:getIco(p.type),d:p.dist+'m away',isNearby:true,lat:p.lat,lng:p.lng}));
+  const all=[...famous,...nearby];
+  $('recoGrid').innerHTML=all.map((c,i)=>`
+    <div class="rc" style="animation-delay:${i*.07}s">
+      <div class="rc-img"><span>${c.e}</span><div class="rc-tag ${c.isNearby?'nearby':'famous'}">${c.isNearby?'Nearby':'Famous'}</div></div>
+      <div class="rc-body">
+        <div class="rc-name">${c.n}</div>
+        <div class="rc-meta">${c.d}</div>
+        <button class="rc-dir" onclick="showDir(${c.lat},${c.lng},'${c.n.replace(/'/g,"\\'")}')">🗺️ Get Directions</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── DIRECTIONS ────────────────────────────────────────────
+function showDir(toLat,toLng,name){
+  S.dirTarget={lat:toLat,lng:toLng,name};
+  $('dirTtl').textContent='Directions to '+name;
+  $('dirFrom').textContent=S.city||(S.lat?S.lat.toFixed(3)+', '+S.lng.toFixed(3):'Your location');
+  $('dirTo').textContent=name;
+  const fromLat=S.lat||toLat-.005, fromLng=S.lng||toLng-.005;
+  const minLat=Math.min(fromLat,toLat)-.008, maxLat=Math.max(fromLat,toLat)+.008;
+  const minLng=Math.min(fromLng,toLng)-.008, maxLng=Math.max(fromLng,toLng)+.008;
+  $('dirFrame').src=`https://www.openstreetmap.org/export/embed.html?bbox=${minLng},${minLat},${maxLng},${maxLat}&layer=mapnik&marker=${toLat},${toLng}`;
+  $('dirModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeDir(){$('dirModal').classList.remove('show');document.body.style.overflow='';$('dirFrame').src='';}
+function openInMaps(){
+  const t=S.dirTarget;if(!t)return;
+  const url=S.lat&&S.lng
+    ?`https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${S.lat},${S.lng};${t.lat},${t.lng}`
+    :`https://www.openstreetmap.org/?mlat=${t.lat}&mlon=${t.lng}&zoom=16`;
+  window.open(url,'_blank');
+}
+$('dirModal').addEventListener('click',e=>{if(e.target===$('dirModal'))closeDir();});
+
+// ── NEARBY ────────────────────────────────────────────────
+const ICOS={restaurant:'🍽️',cafe:'☕',hospital:'🏥',pharmacy:'💊',atm:'🏧',bank:'🏦',hotel:'🏨',hostel:'🏨',motel:'🏨',guest_house:'🏨',shopping_mall:'🛍️',supermarket:'🛒',fuel:'⛽',park:'🌳',museum:'🏛️',cinema:'🎬',gym:'💪',fast_food:'🍔',bar:'🍺',school:'🎓',university:'🎓',place_of_worship:'⛪',police:'👮',bakery:'🥐',default:'📍'};
+const getIco=t=>ICOS[t]||ICOS.default;
+
+async function loadNearby(lat,lng){
+  try{
+    const r=await fetch(API+'/location/nearby?lat='+lat+'&lng='+lng);
+    const d=await r.json();
+    window._places=d.places;
+    renderPlaces('all');renderHotels(d.places);renderFood(d.places);
+    $('pBadge').textContent=d.total+' found';
+    buildCats(d.places);
+    if(d.total)toast('Found '+d.total+' places nearby!','ok');
+  }catch{toast('Nearby places unavailable','err');}
+}
+function buildCats(pl){
+  const cats=['all',...[...new Set(pl.map(p=>p.type))].slice(0,8)];
+  $('catRow').innerHTML=cats.map(c=>'<button class="cb'+(c==='all'?' on':'')+'" onclick="doFilter(\''+c+'\',this)">'+(c==='all'?'All':getIco(c)+' '+c)+'</button>').join('');
+}
+function doFilter(cat,el){document.querySelectorAll('.cb').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderPlaces(cat);}
+function renderPlaces(cat){
+  const pl=window._places||[];const f=cat==='all'?pl:pl.filter(p=>p.type===cat);
+  const g=$('pgrid');
+  if(!f.length){g.innerHTML='<div class="pempty">No places in this category</div>';return;}
+  g.innerHTML=f.slice(0,20).map((p,i)=>`
+    <div class="pc" style="animation-delay:${i*.04}s" onclick="showDir(${p.lat},${p.lng},'${p.name.replace(/'/g,"\\'")}')">
+      <div class="pi2">${getIco(p.type)}</div><div class="pn">${p.name}</div>
+      <div class="ptyp">${p.type}</div>
+      <div class="pdist">~${p.dist>1000?(p.dist/1000).toFixed(1)+'km':p.dist+'m'}</div>
+      <div class="pdir">🗺️ Directions</div>
+    </div>`).join('');
+}
+function renderHotels(pl){
+  const h=pl.filter(p=>['hotel','hostel','motel','guest_house'].includes(p.type)).slice(0,5);
+  $('hBadge').textContent=h.length;
+  $('hlist').innerHTML=h.length?h.map(x=>`
+    <div class="hcard" onclick="showDir(${x.lat},${x.lng},'${x.name.replace(/'/g,"\\'")}')">
+      <div class="himg">🏨</div>
+      <div><div class="hname">${x.name}</div><div class="hmeta">~${x.dist}m away</div><div class="hstars">★★★★</div><div class="xdir">🗺️ Get directions</div></div>
+    </div>`).join(''):'<div class="no-data">No hotels found nearby</div>';
+}
+function renderFood(pl){
+  const f=pl.filter(p=>['restaurant','cafe','fast_food','bar','bakery'].includes(p.type)).slice(0,6);
+  $('fBadge').textContent=f.length;
+  $('flist').innerHTML=f.length?f.map(x=>`
+    <div class="fcard" onclick="showDir(${x.lat},${x.lng},'${x.name.replace(/'/g,"\\'")}')">
+      <div class="femo">${getIco(x.type)}</div>
+      <div><div class="fname">${x.name}</div><div class="ftype">${x.type} · ~${x.dist}m</div><div class="xdir">🗺️ Directions</div></div>
+      <div class="frat">★ 4.${Math.floor(Math.random()*4)+1}</div>
+    </div>`).join(''):'<div class="no-data">No food spots found nearby</div>';
+}
+
+// ── CHAT ──────────────────────────────────────────────────
+function addUser(t){const c=$('chatMsgs');const d=document.createElement('div');d.className='msg mu';d.innerHTML='<div><div class="mb">'+t+'</div><div class="mt">'+ft()+'</div></div>';c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function aiSay(t){const c=$('chatMsgs');const d=document.createElement('div');d.className='msg mai';d.innerHTML='<div class="mav">🤖</div><div><div class="mb">'+t+'</div><div class="mt">'+ft()+'</div></div>';c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function showTyp(){const c=$('chatMsgs');const d=document.createElement('div');d.id='typ';d.className='msg mai';d.innerHTML='<div class="mav">🤖</div><div class="tdots"><span></span><span></span><span></span></div>';c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function hideTyp(){const t=$('typ');if(t)t.remove();}
+async function callAI(prompt,silent=false){
+  if(!silent)addUser(prompt);
+  showTyp();$('csend').disabled=true;S.busy=true;
+  try{
+    const r=await fetch(API+'/ai/chat',{method:'POST',headers:authHdrs(),body:JSON.stringify({message:prompt,sessionId:S.sessionId,city:S.city,lat:S.lat,lng:S.lng})});
+    if(!r.ok)throw new Error();
+    const d=await r.json();
+    hideTyp();aiSay(d.reply);
+  }catch{hideTyp();aiSay('Connection error — make sure the backend is running! 🔧');}
+  S.busy=false;$('csend').disabled=false;
+}
+function doSend(){const inp=$('cin');const t=inp.value.trim();if(!t||S.busy)return;inp.value='';callAI((S.lat?'[In '+S.city+', '+S.lat.toFixed(4)+','+S.lng.toFixed(4)+'] ':'')+t);}
+function qs(t){$('cin').value=t;doSend();}
+</script>
+</body>
+</html>
