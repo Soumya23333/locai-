@@ -19,4 +19,27 @@ async function authMiddleware(req, res, next) {
   next();
 }
 
+// Role-based access control middleware
+function authorize(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    next();
+  };
+}
+
+// Request logging middleware
+function logAuth(req, res, next) {
+  console.log(`[AUTH] ${new Date().toISOString()} - ${req.method} ${req.path} - User: ${req.userId || 'Anonymous'}`);
+  next();
+}
+
 module.exports = authMiddleware;
+module.exports.authorize = authorize;
+module.exports.logAuth = logAuth;
