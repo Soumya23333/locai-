@@ -54,6 +54,30 @@ async function reverseGeocode(req, res) {
   }
 }
 
+// Retry helper with exponential backoff
+async function fetchWithRetry(url, options, maxRetries = 2) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const r = await fetch(url, options);
+      if (r.ok) return r;
+      
+      // Retry on 503, 504, 429 (temporary errors)
+      if ([429, 503, 504].includes(r.status)) {
+        const delay = Math.pow(2, i) * 1000; // exponential backoff
+        console.log(`Retry ${i + 1}/${maxRetries} after ${delay}ms (status: ${r.status})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      return r;
+    } catch (err) {
+      if (i === maxRetries - 1) throw err;
+      const delay = Math.pow(2, i) * 1000;
+      console.log(`Retry ${i + 1}/${maxRetries} after ${delay}ms (error: ${err.message})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 // Nearby places via Overpass API (proxied to avoid CORS on frontend)
 async function nearbyPlaces(req, res) {
   const { lat, lng, radius = 900 } = req.query;
@@ -61,11 +85,22 @@ async function nearbyPlaces(req, res) {
 
   try {
     const query = `[out:json][timeout:15];(node["amenity"](around:${radius},${lat},${lng});node["shop"]["name"](around:700,${lat},${lng});node["tourism"](around:${radius},${lat},${lng}););out body 50;`;
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
+    const r = await fetchWithRetry('https://overpass-api.de/api/interpreter', {
       method:  'POST',
       body:    query,
       headers: { 'Content-Type': 'text/plain' },
     });
+    
+    if (!r.ok) {
+      throw new Error(`Overpass API returned ${r.status}: ${r.statusText}`);
+    }
+    
+    const contentType = r.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await r.text();
+      throw new Error(`Expected JSON, got ${contentType || 'unknown'}: ${text.substring(0, 100)}`);
+    }
+    
     const data = await r.json();
 
     const places = (data.elements || [])
@@ -85,7 +120,7 @@ async function nearbyPlaces(req, res) {
     res.json({ places, total: places.length });
   } catch (err) {
     console.error('Nearby error:', err);
-    res.status(500).json({ error: 'Could not fetch nearby places' });
+    res.status(503).json({ error: 'Overpass API unavailable. Try again in a moment.' });
   }
 }
 
